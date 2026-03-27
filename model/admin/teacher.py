@@ -203,8 +203,8 @@ def model_add_teacher():
         name = request.form['form_name']
 
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO tbl_teacher (id_teacher, name, id_admin) VALUES (%s, %s, %s)",
-                    ('', name, session['id_admin'], ))
+        cur.execute("INSERT INTO tbl_teacher (name, id_admin) VALUES (%s, %s)",
+                    (name, session['id_admin'], ))
         mysql.connection.commit()
         cur.close()
 

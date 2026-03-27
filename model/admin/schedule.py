@@ -301,6 +301,7 @@ def model_add_schedule():
         term = request.form['form_term']
 
         if term == "TRIAL":
+            term = 0
             student_name = request.form['form_trial_student_name']
             dob = request.form['form_trial_dob']
 
@@ -313,6 +314,7 @@ def model_add_schedule():
             student = cur.lastrowid
             total_meetings = 1
         else:
+            term = int(term)
             student = int(request.form['form_student'])
             total_meetings = int(request.form['form_total_meetings'])
 
