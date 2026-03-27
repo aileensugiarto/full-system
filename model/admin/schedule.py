@@ -698,14 +698,67 @@ def model_process_edit_master_schedule():
     return redirect(url_for("schedule"))
 
 # DELETE SCHEDULE
-def model_delete_schedule(id):
-  cur = mysql.connection.cursor()
-  cur.execute("DELETE FROM tbl_schedule WHERE id_schedule = %s AND id_admin=%s", (id, session['id_admin'], ))
-  mysql.connection.commit()
-  cur.close()
+# def model_delete_schedule(id):
+#   cur = mysql.connection.cursor()
+#   cur.execute("DELETE FROM tbl_schedule WHERE id_schedule = %s AND id_admin=%s", (id, session['id_admin'], ))
+#   mysql.connection.commit()
+#   cur.close()
 
-  flash("Schedule successfully deleted", "success")
-  return redirect(url_for("schedule"))
+#   flash("Schedule successfully deleted", "success")
+#   return redirect(url_for("schedule"))
+
+def model_delete_schedule(id):
+    cur = mysql.connection.cursor()
+
+    # =========================
+    # 1️⃣ GET STUDENT LINKED TO THIS SCHEDULE
+    # =========================
+    cur.execute("""
+        SELECT st.id_student, st.is_trial
+        FROM tbl_attendance a
+        JOIN tbl_student st ON a.id_student = st.id_student
+        WHERE a.id_schedule = %s
+        AND a.id_admin = %s
+    """, (id, session['id_admin']))
+
+    student_data = cur.fetchone()
+
+    # =========================
+    # 2️⃣ DELETE ATTENDANCE FIRST
+    # =========================
+    cur.execute("""
+        DELETE FROM tbl_attendance 
+        WHERE id_schedule = %s 
+        AND id_admin = %s
+    """, (id, session['id_admin']))
+
+    # =========================
+    # 3️⃣ DELETE SCHEDULE
+    # =========================
+    cur.execute("""
+        DELETE FROM tbl_schedule 
+        WHERE id_schedule = %s 
+        AND id_admin=%s
+    """, (id, session['id_admin']))
+
+    # =========================
+    # 4️⃣ DELETE TRIAL STUDENT (ONLY IF TRIAL)
+    # =========================
+    if student_data:
+        student_id, is_trial = student_data
+
+        if is_trial == 1:
+            cur.execute("""
+                DELETE FROM tbl_student
+                WHERE id_student = %s
+                AND id_admin = %s
+            """, (student_id, session['id_admin']))
+
+    mysql.connection.commit()
+    cur.close()
+
+    flash("Schedule successfully deleted", "success")
+    return redirect(url_for("schedule"))
 
 # DELETE MASTER SCHEDULE
 def model_delete_master_schedule(id_master_schedule):

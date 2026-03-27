@@ -144,6 +144,7 @@ def model_add_payment():
         SELECT id_student, name
         FROM tbl_student
         WHERE id_admin=%s
+        AND (is_trial IS NULL OR is_trial = 0)
         ORDER BY name ASC
     """, (session['id_admin'],))
 
