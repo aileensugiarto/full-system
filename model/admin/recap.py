@@ -28,6 +28,7 @@ def model_recap():
                 s.join_date
             FROM tbl_student s
             WHERE s.id_admin=%s
+            ORDER BY s.name ASC
     """, (session["id_admin"], ))
     rows = cur.fetchall()
 
