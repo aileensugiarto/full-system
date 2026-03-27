@@ -50,7 +50,7 @@ def model_student():
         filter_month = None
         filter_term = "all"
 
-    # ✅ 🔥 FETCH LEVELS (SORT BY AGE RANGE, NOT NAME)
+    # 🔹 FETCH LEVELS (SORT BY AGE RANGE)
     cur.execute("""
         SELECT 
             level_name,
@@ -61,7 +61,6 @@ def model_student():
         ORDER BY min_age ASC
     """, (session["id_admin"],))
 
-    # only send level_name to frontend
     levels = [row[0] for row in cur.fetchall()]
 
     # 🔹 FETCH STUDENTS
@@ -75,7 +74,7 @@ def model_student():
             parent_telp,
             address
         FROM tbl_student
-        WHERE id_admin = %s
+        WHERE id_admin = %s AND (is_trial = 0 OR is_trial IS NULL)
         ORDER BY name
     """, (session["id_admin"],))
 
@@ -95,7 +94,7 @@ def model_student():
 
         age = calculate_age(dob)
 
-        # fix join_date format
+        # 🔹 FIX join_date format
         if isinstance(join_date, str) and join_date.strip():
             join_date = datetime.strptime(join_date, "%Y-%m-%d").date()
         else:
@@ -103,17 +102,14 @@ def model_student():
 
         # 🔹 TERM LOOP
         if is_all_terms:
-            term_month_pairs = [
-                (t, m)
-                for t in range(1, 5)
-                for m in TERM_MONTHS[t]
-            ]
+            term_month_pairs = [(None, m) for m in range(1, 13)]
         else:
             term_month_pairs = [(filter_term, filter_month)]
 
-        for term, month in term_month_pairs:
+        for _, month in term_month_pairs:
+            term = get_term_from_month(month)
 
-            # 🔹 GET LATEST PERIOD DATA
+            # 🔹 GET LATEST PERIOD DATA (IMPORTANT LOGIC)
             cur.execute("""
                 SELECT
                     sp.status,
@@ -125,12 +121,16 @@ def model_student():
                 LEFT JOIN tbl_teacher t
                     ON sp.id_teacher = t.id_teacher
                 WHERE sp.id_student = %s
-                  AND (sp.year < %s OR (sp.year = %s AND sp.month <= %s))
+                AND (sp.year < %s OR (sp.year = %s AND sp.month <= %s))
                 ORDER BY sp.year DESC, sp.month DESC
                 LIMIT 1
             """, (id_student, filter_year, filter_year, month))
 
             period = cur.fetchone()
+
+            # 🔹 SAFE COPY
+            display_join_date = join_date
+            display_parent_name = parent_name
 
             # 🔹 CHECK IF STUDENT HAS JOINED
             if not join_date:
@@ -141,19 +141,24 @@ def model_student():
                     (join_date.year == filter_year and join_date.month > month)
                 )
 
+            # =========================
+            # ✅ FINAL STATUS LOGIC
+            # =========================
             if not joined:
                 display_status = "Not Joined"
-                teacher_name = "-"
-                level_name = "-"
-                class_type = "-"
+                teacher_name = ""
+                level_name = ""
+                class_type = ""
+
             else:
                 if period:
                     status, id_teacher, id_level, class_type, teacher_name = period
 
+                    # ✅ KEY FIX: USE DB STATUS DIRECTLY
                     display_status = status if status else "Current Student"
-                    teacher_name = teacher_name if teacher_name else "-"
+                    teacher_name = teacher_name if teacher_name else ""
 
-                    # 🔥 GET LEVEL NAME
+                    # 🔹 GET LEVEL NAME
                     if id_level:
                         cur.execute("""
                             SELECT level_name
@@ -161,17 +166,19 @@ def model_student():
                             WHERE id_level = %s
                         """, (id_level,))
                         lvl = cur.fetchone()
-                        level_name = lvl[0] if lvl else "-"
+                        level_name = lvl[0] if lvl else ""
                     else:
-                        level_name = "-"
+                        level_name = ""
 
-                    class_type = class_type if class_type else "-"
+                    class_type = class_type if class_type else ""
+
                 else:
                     display_status = "Current Student"
-                    teacher_name = "-"
-                    level_name = "-"
-                    class_type = "-"
+                    teacher_name = ""
+                    level_name = ""
+                    class_type = ""
 
+            # 🔹 APPEND RESULT
             students.append({
                 "id": id_student,
                 "name": name,
@@ -179,8 +186,8 @@ def model_student():
                 "age": age,
                 "level": level_name,
                 "class_type": class_type,
-                "join_date": join_date,
-                "parent_name": parent_name,
+                "join_date": display_join_date,
+                "parent_name": display_parent_name,
                 "parent_telp": parent_telp,
                 "address": address,
                 "year": filter_year,
@@ -198,11 +205,10 @@ def model_student():
         data_student=students,
         filter_year=filter_year,
         filter_term=filter_term,
-        filter_month=filter_month_name,
+        filter_month=filter_month,
+        filter_month_name=filter_month_name,
         levels=levels
     )
-
-
 # ADD STUDENT
 def model_add_student():
     cur = mysql.connection.cursor()
@@ -298,7 +304,6 @@ def safe_int(value, default):
         return int(value)
     except (TypeError, ValueError):
         return default
-    
 
 # EDIT STUDENT
 def model_edit_student(id):
@@ -565,13 +570,13 @@ def model_delete_student(id):
 def calculate_age(dob):
 
     if not dob or dob == "":
-        return "-"
+        return ""
 
     if isinstance(dob, str):
         try:
             dob = datetime.strptime(dob, "%Y-%m-%d").date()
         except ValueError:
-            return "-"
+            return ""
 
     today = date.today()
 

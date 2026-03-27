@@ -73,6 +73,7 @@ def model_director_student():
           ON sp.id_teacher = t.id_teacher
 
         WHERE a.id_director = %s
+        AND (sp.status IS NULL OR sp.status != 'Trial')
         ORDER BY b.branch_name, s.name
     """, (filter_year, filter_month, session['id_director']))
 

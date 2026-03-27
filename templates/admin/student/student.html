@@ -433,9 +433,6 @@
           </div>
         </div>
 
-        <!-- <div class="col-md-6">
-          
-        </div> -->
         <div class="row g-2 align-items-end">
             <!-- LEVEL FILTER -->
             <div class="col">
@@ -463,6 +460,7 @@
                   <option value="current student">Current Student</option>
                   <option value="waiting list">Waiting List</option>
                   <option value="past student">Past Student</option>
+                  <option value="trial">Trial Student</option>
                 </select>
               </div>
             </div>
@@ -507,7 +505,7 @@
           </span>
           <span class="period-separator">•</span>
           <span class="period-item">
-            {{ filter_month}}
+            {{ filter_month_name }}
           </span>
           {% else %}
           <span class="period-item">
@@ -557,10 +555,10 @@
               <td>{{ s.teacher }}</td>
               <td>{{ s.class_type }}</td>
               <td>{{ s.parent_name }}</td>
-              <td>{{ s.parent_telp if s.parent_telp else "-" }}</td>
+              <td>{{ s.parent_telp if s.parent_telp else "" }}</td>
               <td>
                 <div class="address-box {% if not s.address %}empty{% endif %}">
-                  {{ s.address if s.address else "-" }}
+                  {{ s.address if s.address else "" }}
                 </div>
               </td>
               <td>{{ s.join_date }}</td>
@@ -575,7 +573,10 @@
                 <span class="badge bg-secondary" style="font-size:12px;">Past Student</span>
 
                 {% elif s.status == 'Not Joined' %}
-                <span class="badge bg-info text-dark" style="font-size:12px;">Not Joined</span>
+                <span class="badge bg-danger text-white" style="font-size:12px;">Not Joined</span>
+
+                {% elif s.status == 'Trial' %}
+                <span class="badge bg-info" style="font-size: 12px;">Trial Student</span>
 
                 {% else %}
                 <span class="badge bg-light text-dark" style="font-size:12px;">-</span>

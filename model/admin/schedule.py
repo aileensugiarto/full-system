@@ -64,7 +64,7 @@ def model_schedule():
         JOIN tbl_teacher t ON s.id_teacher = t.id_teacher
         LEFT JOIN tbl_level l ON s.id_level = l.id_level
         JOIN tbl_attendance a ON s.id_schedule = a.id_schedule
-        JOIN tbl_student st ON a.id_student = st.id_student
+        LEFT JOIN tbl_student st ON a.id_student = st.id_student
         WHERE DATE(s.date) = %s
         AND s.id_admin = %s
         ORDER BY s.id_teacher, s.start_time
@@ -305,14 +305,17 @@ def model_add_schedule():
             student_name = request.form['form_trial_student_name']
             dob = request.form['form_trial_dob']
 
-            # Insert trial student
+            # ✅ DO NOT insert into tbl_student
+            # Instead: store name directly in schedule
+
             cur.execute("""
                 INSERT INTO tbl_student (name, dob, is_trial, id_admin)
-                VALUES (%s,%s,1,%s)
-            """, (student_name, dob, session['id_admin']))
+                VALUES (%s, %s, %s, %s)
+            """, (student_name, dob, 1, session['id_admin']))
 
             student = cur.lastrowid
             total_meetings = 1
+
         else:
             term = int(term)
             student = int(request.form['form_student'])
