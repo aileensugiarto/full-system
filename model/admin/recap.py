@@ -40,7 +40,7 @@ def model_recap():
             join_date = date.fromisoformat(join_date)
         
         # Check join date
-        if join_date.year > year or (join_date.year == year and join_date.month > month):
+        if join_date and (join_date.year > year or (join_date.year == year and join_date.month > month)):
             continue # not joined yet
 
         # Get effective period
