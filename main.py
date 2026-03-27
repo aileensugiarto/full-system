@@ -93,7 +93,7 @@ def dashboard():
     data = cur.fetchall()
 
     # Total Students
-    cur.execute("SELECT COUNT(id_student) FROM tbl_student WHERE id_admin = %s", (session['id_admin'], ))
+    cur.execute("SELECT COUNT(id_student) FROM tbl_student WHERE id_admin = %s AND (is_trial IS NULL OR is_trial = 0)", (session['id_admin'], ))
     data_student = cur.fetchone()[0]
 
     # Total Teachers

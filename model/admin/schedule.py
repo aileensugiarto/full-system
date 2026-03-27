@@ -274,7 +274,7 @@ def model_add_schedule():
     cur.execute("SELECT * FROM tbl_teacher WHERE id_admin=%s", (session['id_admin'],))
     teachers = cur.fetchall()
 
-    cur.execute("SELECT * FROM tbl_student WHERE id_admin=%s", (session['id_admin'],))
+    cur.execute("SELECT * FROM tbl_student WHERE id_admin=%s AND (is_trial IS NULL OR is_trial = 0)", (session['id_admin'],))
     students = cur.fetchall()
 
     updated_students = []
