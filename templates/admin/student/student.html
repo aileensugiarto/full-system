@@ -460,7 +460,6 @@
                   <option value="current student">Current Student</option>
                   <option value="waiting list">Waiting List</option>
                   <option value="past student">Past Student</option>
-                  <option value="trial">Trial Student</option>
                 </select>
               </div>
             </div>
@@ -574,9 +573,6 @@
 
                 {% elif s.status == 'Not Joined' %}
                 <span class="badge bg-danger text-white" style="font-size:12px;">Not Joined</span>
-
-                {% elif s.status == 'Trial' %}
-                <span class="badge bg-info" style="font-size: 12px;">Trial Student</span>
 
                 {% else %}
                 <span class="badge bg-light text-dark" style="font-size:12px;">-</span>
