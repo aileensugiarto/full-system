@@ -297,7 +297,23 @@ def director_dashboard():
     cur = mysql.connection.cursor()
 
     # Total Students
-    cur.execute("SELECT COUNT(s.id_student) FROM tbl_student s JOIN tbl_admin a ON s.id_admin = a.id_admin WHERE a.id_director = %s", (session['id_director'], ))
+    cur.execute("""
+    SELECT COUNT(*)
+    FROM tbl_student s
+    JOIN tbl_admin a ON s.id_admin = a.id_admin
+
+    LEFT JOIN tbl_student_period sp 
+      ON sp.id_student = s.id_student
+      AND (sp.year * 100 + sp.month) = (
+          SELECT MAX(sp2.year * 100 + sp2.month)
+          FROM tbl_student_period sp2
+          WHERE sp2.id_student = s.id_student
+      )
+
+    WHERE a.id_director = %s
+    AND sp.status IS NOT NULL
+    AND sp.status != 'Trial'
+""", (session['id_director'],))
     data_student = cur.fetchone()[0]
 
     # Total Teachers
